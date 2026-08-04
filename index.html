@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mk3 Pundri - Watch, Play & Earn</title>
+  
+  <!-- Telegram & Ad SDKs -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+  <script src="https://alwingulla.com/88/tag.min.js" data-zone="YOUR_MONETAG_ZONE_ID" async data-cfasync="false"></script>
+
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 15px; }
+    .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .btn { background: #28a745; color: white; border: none; padding: 10px 15px; font-size: 15px; border-radius: 8px; cursor: pointer; width: 100%; margin: 5px 0; }
+    .btn-blue { background: #008cba; }
+    .btn-purple { background: #6f42c1; }
+    .btn-orange { background: #fd7e14; }
+    input { width: 90%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  </style>
+</head>
+<body>
+
+  <!-- Dashboard -->
+  <div class="card">
+    <h2>🏆 Welcome Player</h2>
+    <h3>बैलेंस: <span id="balance">0</span> Coins</h3>
+    <p>आज के ऐड्स देखें: <span id="ad-count">0</span>/20</p>
+  </div>
+
+  <!-- 1. Watch Ads Section -->
+  <div class="card">
+    <h3>📺 Watch Ads & Earn</h3>
+    <button class="btn" onclick="watchAd()">ऐड देखें (+1 Coin)</button>
+  </div>
+
+  <!-- 2. Play 4 Games Section -->
+  <div class="card">
+    <h3>🎮 Play Games (+1 Coin Per Play)</h3>
+    <div class="game-grid">
+      <button class="btn btn-blue" onclick="playGame('Spin Wheel')">🎯 Spin Wheel</button>
+      <button class="btn btn-purple" onclick="playGame('Tic Tac Toe')">❌ Tic-Tac-Toe</button>
+      <button class="btn btn-orange" onclick="playGame('Memory Game')">🧠 Memory Game</button>
+      <button class="btn btn-blue" onclick="playGame('Number Guess')">🔢 Guess Number</button>
+    </div>
+  </div>
+
+  <!-- 3. Tasks Section -->
+  <div class="card">
+    <h3>📋 Tasks & Bonus</h3>
+    <button class="btn btn-purple" onclick="completeTask('Telegram Channel', 20)">📢 Join Telegram (+20 Coins)</button>
+    <button class="btn btn-orange" onclick="completeTask('YouTube Subscribe', 30)">🔴 Subscribe YouTube (+30 Coins)</button>
+  </div>
+
+  <!-- 4. UPI Withdrawal Section -->
+  <div class="card">
+    <h3>💸 UPI Withdrawal (Google Pay / PhonePe / Paytm)</h3>
+    <p><b>दर:</b> 1000 Coins = ₹10</p>
+    <p><b>मिनिमम विथड्रॉल:</b> 1000 Coins</p>
+    <input type="text" id="upiId" placeholder="UPI ID दर्ज करें (उदा: 9876543210@okaxis)">
+    <button class="btn btn-blue" onclick="requestWithdrawal()">Google Pay पर रिडीम करें (₹10)</button>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+
+    let userCoins = 0;
+    let adsWatchedToday = 0;
+    const MAX_DAILY_ADS = 20;
+
+    const AdController = window.Adsgram?.init({ blockId: "YOUR_ADSGRAM_BLOCK_ID" });
+
+    function watchAd() {
+      if (adsWatchedToday >= MAX_DAILY_ADS) {
+        alert("⚠️ आपकी आज की ऐड लिमिट (20/20) पूरी हो चुकी है!");
+        return;
+      }
+
+      if (AdController) {
+        AdController.show().then(() => {
+          userCoins += 1;
+          adsWatchedToday += 1;
+          updateUI();
+          alert("बधाई हो! आपको +1 Coin मिला।");
+        }).catch(() => {
+          if (typeof show_8888888 === 'function') { 
+            show_8888888(); 
+            userCoins += 1;
+            adsWatchedToday += 1;
+            updateUI();
+          } else {
+            alert("ऐड लोड नहीं हो पाया।");
+          }
+        });
+      }
+    }
+
+    function playGame(gameName) {
+      userCoins += 1;
+      updateUI();
+      alert(`आपने ${gameName} खेला! आपके खाते में +1 Coin जोड़ दिया गया है।`);
+    }
+
+    function completeTask(taskName, bonus) {
+      userCoins += bonus;
+      updateUI();
+      alert(`'${taskName}' पूरा करने पर +${bonus} Coins मिले।`);
+    }
+
+    function requestWithdrawal() {
+      const upi = document.getElementById('upiId').value.trim();
+      
+      if (!upi || !upi.includes('@')) {
+        alert("❌ कृपया सही UPI ID दर्ज करें!");
+        return;
+      }
+      
+      if (userCoins < 1000) {
+        alert(`❌ मिनिमम विथड्रॉल 1000 कॉइन्स (₹10) है। आपके पास अभी ${userCoins} कॉइन्स हैं।`);
+        return;
+      }
+
+      const inrAmount = (userCoins / 1000) * 10;
+
+      tg.sendData(JSON.stringify({
+        action: "withdraw",
+        method: "Google Pay / UPI",
+        upi_id: upi,
+        coins: userCoins,
+        amount_inr: inrAmount
+      }));
+
+      alert(`✅ ₹${inrAmount} की विथड्रॉल रिक्वेस्ट भेज दी गई है!`);
+    }
+
+    function updateUI() {
+      document.getElementById('balance').innerText = userCoins;
+      document.getElementById('ad-count').innerText = adsWatchedToday;
+    }
+  </script>
+</body>
+</html>
