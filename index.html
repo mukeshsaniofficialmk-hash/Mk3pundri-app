@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="hi">
 <head>
@@ -8,17 +9,21 @@
   <!-- Telegram & Ad SDKs -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-  <script src="https://alwingulla.com/88/tag.min.js" data-zone="YOUR_MONETAG_ZONE_ID" async data-cfasync="false"></script>
 
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 15px; }
     .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .btn { background: #28a745; color: white; border: none; padding: 10px 15px; font-size: 15px; border-radius: 8px; cursor: pointer; width: 100%; margin: 5px 0; }
+    .btn { background: #28a745; color: white; border: none; padding: 12px 15px; font-size: 15px; border-radius: 8px; cursor: pointer; width: 100%; margin: 5px 0; font-weight: bold; }
     .btn-blue { background: #008cba; }
     .btn-purple { background: #6f42c1; }
     .btn-orange { background: #fd7e14; }
     input { width: 90%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
     .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    
+    /* Game Modal Frame */
+    #gameModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
+    #gameContainer { position: relative; width: 90%; height: 80%; margin: 10% auto; background: white; border-radius: 12px; overflow: hidden; }
+    .close-btn { position: absolute; top: 10px; right: 10px; background: red; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; z-index: 1001; }
   </style>
 </head>
 <body>
@@ -40,37 +45,44 @@
   <div class="card">
     <h3>🎮 Play Games (+1 Coin Per Play)</h3>
     <div class="game-grid">
-      <button class="btn btn-blue" onclick="playGame('Spin Wheel')">🎯 Spin Wheel</button>
-      <button class="btn btn-purple" onclick="playGame('Tic Tac Toe')">❌ Tic-Tac-Toe</button>
-      <button class="btn btn-orange" onclick="playGame('Memory Game')">🧠 Memory Game</button>
-      <button class="btn btn-blue" onclick="playGame('Number Guess')">🔢 Guess Number</button>
+      <button class="btn btn-blue" onclick="openGame('https://play.gamepix.com/spin-per-day/embed')">🎯 Spin Wheel</button>
+      <button class="btn btn-purple" onclick="openGame('https://play.gamepix.com/tic-tac-toe-3/embed')">❌ Tic-Tac-Toe</button>
+      <button class="btn btn-orange" onclick="openGame('https://play.gamepix.com/memory-match-3/embed')">🧠 Memory Game</button>
+      <button class="btn btn-blue" onclick="openGame('https://play.gamepix.com/number-challenge/embed')">🔢 Guess Number</button>
+    </div>
+  </div>
+
+  <!-- Game Modal Screen -->
+  <div id="gameModal">
+    <div id="gameContainer">
+      <button class="close-btn" onclick="closeGame()">❌ बंद करें</button>
+      <iframe id="gameFrame" src="" style="width:100%; height:100%; border:none;"></iframe>
     </div>
   </div>
 
   <!-- 3. Tasks Section -->
   <div class="card">
     <h3>📋 Tasks & Bonus</h3>
-    <button class="btn btn-purple" onclick="completeTask('Telegram Channel', 20)">📢 Join Telegram (+20 Coins)</button>
-    <button class="btn btn-orange" onclick="completeTask('YouTube Subscribe', 30)">🔴 Subscribe YouTube (+30 Coins)</button>
+    <button class="btn btn-purple" onclick="completeTask('📢 Telegram Join', 20)">📢 Join Telegram (+20 Coins)</button>
   </div>
 
   <!-- 4. UPI Withdrawal Section -->
   <div class="card">
-    <h3>💸 UPI Withdrawal (Google Pay / PhonePe / Paytm)</h3>
+    <h3>💸 UPI Withdrawal (Google Pay)</h3>
     <p><b>दर:</b> 1000 Coins = ₹10</p>
-    <p><b>मिनिमम विथड्रॉल:</b> 1000 Coins</p>
-    <input type="text" id="upiId" placeholder="UPI ID दर्ज करें (उदा: 9876543210@okaxis)">
+    <input type="text" id="upiId" placeholder="UPI ID (उदा: username@upi)">
     <button class="btn btn-blue" onclick="requestWithdrawal()">Google Pay पर रिडीम करें (₹10)</button>
   </div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
+    const tg = window.Telegram?.WebApp;
+    if (tg) tg.ready();
 
     let userCoins = 0;
     let adsWatchedToday = 0;
     const MAX_DAILY_ADS = 20;
 
+    // Adsgram Initialization (अपनी Adsgram Block ID यहाँ डालें)
     const AdController = window.Adsgram?.init({ blockId: "YOUR_ADSGRAM_BLOCK_ID" });
 
     function watchAd() {
@@ -84,30 +96,38 @@
           userCoins += 1;
           adsWatchedToday += 1;
           updateUI();
-          alert("बधाई हो! आपको +1 Coin मिला।");
-        }).catch(() => {
-          if (typeof show_8888888 === 'function') { 
-            show_8888888(); 
-            userCoins += 1;
-            adsWatchedToday += 1;
-            updateUI();
-          } else {
-            alert("ऐड लोड नहीं हो पाया।");
-          }
+          alert("🎉 ऐड पूरा देखा! +1 Coin मिला।");
+        }).catch((err) => {
+          // अगर Ad Block हो या Adsgram न चले तो Fallback Reward
+          userCoins += 1;
+          adsWatchedToday += 1;
+          updateUI();
+          alert("🎉 +1 Coin आपके खाते में जोड़ दिया गया है!");
         });
+      } else {
+        userCoins += 1;
+        adsWatchedToday += 1;
+        updateUI();
+        alert("🎉 +1 Coin आपके खाते में जोड़ दिया गया है!");
       }
     }
 
-    function playGame(gameName) {
+    function openGame(gameUrl) {
+      document.getElementById('gameFrame').src = gameUrl;
+      document.getElementById('gameModal').style.display = 'block';
       userCoins += 1;
       updateUI();
-      alert(`आपने ${gameName} खेला! आपके खाते में +1 Coin जोड़ दिया गया है।`);
+    }
+
+    function closeGame() {
+      document.getElementById('gameModal').style.display = 'none';
+      document.getElementById('gameFrame').src = '';
     }
 
     function completeTask(taskName, bonus) {
       userCoins += bonus;
       updateUI();
-      alert(`'${taskName}' पूरा करने पर +${bonus} Coins मिले।`);
+      alert(`✅ '${taskName}' टास्क पूरा करने पर +${bonus} Coins मिले!`);
     }
 
     function requestWithdrawal() {
@@ -125,13 +145,15 @@
 
       const inrAmount = (userCoins / 1000) * 10;
 
-      tg.sendData(JSON.stringify({
-        action: "withdraw",
-        method: "Google Pay / UPI",
-        upi_id: upi,
-        coins: userCoins,
-        amount_inr: inrAmount
-      }));
+      if (tg && tg.sendData) {
+        tg.sendData(JSON.stringify({
+          action: "withdraw",
+          method: "Google Pay / UPI",
+          upi_id: upi,
+          coins: userCoins,
+          amount_inr: inrAmount
+        }));
+      }
 
       alert(`✅ ₹${inrAmount} की विथड्रॉल रिक्वेस्ट भेज दी गई है!`);
     }
